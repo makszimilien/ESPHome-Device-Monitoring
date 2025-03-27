@@ -34,7 +34,7 @@ def update_graph(frame):
 
 # Callback function to handle sensor updates
 def on_sensor_update(state: SensorState):
-    timestamps.append(len(timestamps))  # Simulating time with an index
+    timestamps.append(len(timestamps))
     moisture_values.append(float(state.state))
     print(f"Moisture: {state.state}%")
 
@@ -80,10 +80,10 @@ ani = animation.FuncAnimation(fig, update_graph, interval=1000, cache_frame_data
 plt.show()  # Blocking, but asyncio keeps running in background thread
 
 # Convert deque to numpy array for processing
-moisture_array = np.array(list(moisture_values)) #convert to list before to numpy array
+moisture_array = np.array(list(moisture_values))
 
 # Find peaks using prominence (relative peak detection)
-peaks, properties = find_peaks(moisture_array, prominence=1, distance=20)  # Adjust prominence as needed
+peaks, properties = find_peaks(moisture_array, prominence=1, distance=30)  # Adjust prominence as needed
 
 # Calculate intervals between peaks
 if len(peaks) > 1:
