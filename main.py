@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from collections import deque
 import threading
+import numpy as np
+from scipy.signal import find_peaks
 
 # Device data
 ESP32_HOST = "192.168.1.198"
@@ -73,3 +75,18 @@ thread.start()
 # Start Matplotlib animation in the main thread
 ani = animation.FuncAnimation(fig, update_graph, interval=1000, cache_frame_data=False)
 plt.show()  # Blocking, but asyncio keeps running in background thread
+
+# Convert deque to numpy array for processing
+moisture_array = np.array(moisture_values)
+# Find peaks using prominence (relative peak detection)
+peaks, properties = find_peaks(moisture_array, prominence=1, distance=20)  # Adjust prominence as needed
+
+# Calculate intervals between peaks
+if len(peaks) > 1:
+    intervals = np.diff(peaks)  # Time steps between consecutive peaks
+    avg_interval = np.mean(intervals)
+    print(f"Detected {len(peaks)} peaks.")
+    print(f"Average number of samples between peaks: {avg_interval:.2f}")
+    print(f"Average period time: {avg_interval*0.2:.2f} s")
+else:
+    print("Not enough peaks detected to calculate an average interval.")
