@@ -8,7 +8,7 @@ import numpy as np
 from scipy.signal import find_peaks
 
 # Device data
-ESP32_HOST = "192.168.1.198"
+ESP32_HOST = "192.168.1.204"
 ESP32_PORT = 6053
 ESP32_PASSWORD = ""
 
@@ -39,31 +39,29 @@ def on_sensor_update(state: SensorState):
     print(f"Moisture: {state.state}%")
 
 async def esphome_client():
-    client = APIClient(ESP32_HOST, ESP32_PORT, ESP32_PASSWORD)
+    while True:
+        client = APIClient(ESP32_HOST, ESP32_PORT, ESP32_PASSWORD)
+        try:
+            await client.connect(login=True)
+            print("Connected to ESPHome device!")
 
-    try:
-        await client.connect(login=True)
-        print("Connected to ESPHome device!")
+            # List all sensors
+            entities = await client.list_entities_services()
+            for entity in entities:
+                print(f"Found entity: {entity}")
 
-        # List all sensors
-        entities = await client.list_entities_services()
-        for entity in entities:
-            print(f"Found entity: {entity}")
+            # Subscribe to state updates
+            client.subscribe_states(on_sensor_update)
 
-        # Subscribe to state updates
-        client.subscribe_states(on_sensor_update)
-
-        # Keep running indefinitely
-        while True:
-            await asyncio.sleep(1)
-            if len(timestamps) >= max_data_points:
-                print("Max data points reached, stopping.")
-                plt.close(fig)  # Close the plot
-                break
-    except Exception as e:
-        print(f"Error: {e}")
-    finally:
-        await client.disconnect()
+            # Keep running until disconnected
+            while client._connected:
+                await asyncio.sleep(1)
+        except Exception as e:
+            print(f"Connection error: {e}")
+            print("Reconnecting in 1 seconds...")
+            await asyncio.sleep(5)
+        finally:
+            await client.disconnect()
 
 def run_asyncio_loop():
     """ Runs asyncio loop in a separate thread """
